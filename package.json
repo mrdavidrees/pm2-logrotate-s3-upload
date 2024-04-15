@@ -1,6 +1,6 @@
 {
   "name": "pm2-logrotate-s3-upload",
-  "version": "2.0.14",
+  "version": "2.0.15",
   "description": "Module to rotate logs of every pm2 application and upload logs to s3",
   "main": "app.js",
   "dependencies": {
@@ -15,15 +15,15 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Himanshu Pandey",
+  "author": "David Rees",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/himanshu0511/pm2-logrotate-s3-upload.git"
+    "url": "git+https://github.com/mrdavidrees/pm2-logrotate-s3-upload.git"
   },
   "bugs": {
-    "url": "https://github.com/himanshu0511/pm2-logrotate-s3-upload/issues"
+    "url": "https://github.com/mrdavidrees/pm2-logrotate-s3-upload/issues"
   },
-  "homepage": "https://github.com/himanshu0511/pm2-logrotate-s3-upload",
+  "homepage": "https://github.com/mrdavidrees/pm2-logrotate-s3-upload",
   "license": "MIT",
   "apps": [
     {
