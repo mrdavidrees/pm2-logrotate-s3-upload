@@ -80,14 +80,14 @@ if (
             }
           })
           .catch((error) => {
-            console.error("Get AWS IP CALL ERROR: ", error);
+            console.error("GET AWS IP CALL ERROR: ", error);
           });
       } else {
-        console.log("Get META DATA SERVICE TOKEN: Request failed");
+        console.log("GET META DATA SERVICE TOKEN: Request failed");
       }
     })
     .catch((error) => {
-      console.error("Get META DATA SERVICE TOKEN, AWS IP CALL ERROR: ", error);
+      console.error("GET META DATA SERVICE TOKEN, AWS IP CALL ERROR: ", error);
     });
 }
 
