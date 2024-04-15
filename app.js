@@ -144,15 +144,19 @@ function delete_old(file) {
 
     for (i = rotated_files.length - 1; i >= RETAIN; i--) {
       (function (i) {
+        const hasPermissions =
+          conf.roleAttached ||
+          (conf.aws &&
+            conf.aws.credentials &&
+            conf.aws.credentials.accessKeyId &&
+            conf.aws.credentials.secretAccessKey);
+
         if (
           SERVER_PUBLIC_IP &&
           conf.logBucketSetting &&
           conf.logBucketSetting.bucket &&
           conf.logBucketSetting.s3Path &&
-          conf.aws &&
-          conf.aws.credentials &&
-          conf.aws.credentials.accessKeyId &&
-          conf.aws.credentials.secretAccessKey
+          hasPermissions
           // && conf.aws.credentials.region
         ) {
           // var AWS      = require('aws-sdk');
@@ -209,6 +213,8 @@ function delete_old(file) {
           // }`
           // });
           // readStream.pipe(upload);
+        } else {
+          console.log(`${rotated_files[i]} WAS NOT UPLOADED ${key}`);
         }
       })(i);
     }
