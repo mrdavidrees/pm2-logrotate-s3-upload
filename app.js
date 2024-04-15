@@ -65,6 +65,7 @@ if (
     .then((tokenResponse) => {
       if (tokenResponse.ok) {
         const token = tokenResponse.text();
+        console.log("GET META DATA SERVICE TOKEN: ", token);
 
         fetch("http://169.254.169.254/latest/meta-data/public-ipv4", {
           headers: {
@@ -76,14 +77,22 @@ if (
               SERVER_PUBLIC_IP = res.text();
               console.log("API SERVER_PUBLIC_IP: ", SERVER_PUBLIC_IP);
             } else {
-              console.log("API SERVER_PUBLIC_IP: Request failed");
+              console.log(
+                "API SERVER_PUBLIC_IP: Request failed",
+                res.status,
+                res.statusText
+              );
             }
           })
           .catch((error) => {
             console.error("GET AWS IP CALL ERROR: ", error);
           });
       } else {
-        console.log("GET META DATA SERVICE TOKEN: Request failed");
+        console.log(
+          "GET META DATA SERVICE TOKEN: Request failed",
+          res.status,
+          res.statusText
+        );
       }
     })
     .catch((error) => {
