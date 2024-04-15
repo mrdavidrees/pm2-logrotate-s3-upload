@@ -1,5 +1,5 @@
 {
-  "name": "cd-pm2-logrotate-s3-upload",
+  "name": "pm2-logrotate-s3-upload",
   "version": "2.0.15",
   "description": "Module to rotate logs of every pm2 application and upload logs to s3",
   "main": "app.js",
@@ -27,7 +27,7 @@
   "license": "MIT",
   "apps": [
     {
-      "name": "cd-pm2-logrotate-s3-upload",
+      "name": "pm2-logrotate-s3-upload",
       "script": "app.js",
       "max_memory_restart": "500M",
       "post_update": [
