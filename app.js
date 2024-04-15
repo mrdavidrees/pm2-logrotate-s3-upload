@@ -62,9 +62,9 @@ if (
       "X-aws-ec2-metadata-token-ttl-seconds": "3600",
     },
   })
-    .then((tokenResponse) => {
+    .then(async (tokenResponse) => {
       if (tokenResponse.ok) {
-        const token = tokenResponse.text();
+        const token = await tokenResponse.text();
         console.log("GET META DATA SERVICE TOKEN: ", token);
 
         fetch("http://169.254.169.254/latest/meta-data/public-ipv4", {
@@ -72,9 +72,9 @@ if (
             "X-aws-ec2-metadata-token": token,
           },
         })
-          .then((res) => {
+          .then(async (res) => {
             if (res.ok) {
-              SERVER_PUBLIC_IP = res.text();
+              SERVER_PUBLIC_IP = await res.text();
               console.log("API SERVER_PUBLIC_IP: ", SERVER_PUBLIC_IP);
             } else {
               console.log(
