@@ -53,7 +53,7 @@ if(process.env.SERVER_PUBLIC_IP && typeof process.env.SERVER_PUBLIC_IP === 'stri
       'X-aws-ec2-metadata-token-ttl-seconds': '3600',
     },
   }).then(tokenResponse => {
-    if(res.ok){
+    if(tokenResponse.ok){
       const token = await tokenResponse.text();
 
       fetch('http://169.254.169.254/latest/meta-data/public-ipv4', {
@@ -62,13 +62,18 @@ if(process.env.SERVER_PUBLIC_IP && typeof process.env.SERVER_PUBLIC_IP === 'stri
         }
       }).then(res => {
         if(res.ok){
-            SERVER_PUBLIC_IP = res.text();
-            console.log('API SERVER_PUBLIC_IP: ', SERVER_PUBLIC_IP);
+          SERVER_PUBLIC_IP = res.text();
+          console.log('API SERVER_PUBLIC_IP: ', SERVER_PUBLIC_IP);
+        }
+        else {
+          console.log('API SERVER_PUBLIC_IP: Request failed');
         }
       }).catch(error => {
         console.error('Get AWS IP CALL ERROR: ', error);
       })
-
+    }
+    else {
+      console.log('Get META DATA SERVICE TOKEN: Request failed');
     }
   }).catch(error => {
     console.error('Get META DATA SERVICE TOKEN, AWS IP CALL ERROR: ', error);
