@@ -6,7 +6,6 @@ var moment  	= require('moment-timezone');
 var scheduler	= require('node-schedule');
 var zlib      = require('zlib');
 var deepExtend = require('deep-extend');
-var http = require('http');
 var conf = pmx.initModule({
   widget : {
     type             : 'generic',
@@ -48,37 +47,32 @@ if(process.env.SERVER_PUBLIC_IP && typeof process.env.SERVER_PUBLIC_IP === 'stri
     SERVER_PUBLIC_IP = conf.serverIp;
     console.log('CONF SERVER_PUBLIC_IP: ', SERVER_PUBLIC_IP);
 } else if(conf && conf.getAWSPublicIp){
-    let get = function (host, path, successCallback ,errorCallback) {
-        return http.get({
-            host,
-            path,
-        }, function(response) {
-            // Continuously update stream with data
-            var body = '';
-            response.on('data', function(d) {
-                body += d;
-            });
-            response.on('end', function() {
+  fetch('http://169.254.169.254/latest/api/token', {
+    method: 'PUT',
+    headers: {
+      'X-aws-ec2-metadata-token-ttl-seconds': '3600',
+    },
+  }).then(tokenResponse => {
+    if(res.ok){
+      const token = await tokenResponse.text();
 
-                // Data reception is done, do whatever with it!
-                // var parsed = body
-                if(response && (response.statusCode === 200 )) {
-                    successCallback(body);
-                } else {
-                    errorCallback(body);
-                }
-            });
-        });
-    };
-    get('169.254.169.254', '/latest/meta-data/public-ipv4',
-        (data) => {
-            if(data && typeof data === 'string') {
-                SERVER_PUBLIC_IP = data;
-                console.log('API SERVER_PUBLIC_IP: ', SERVER_PUBLIC_IP);
-            }
-        }, (error) => {
-            console.error('Get AWS IP CALL ERROR: ', error);
-        })
+      fetch('http://169.254.169.254/latest/meta-data/public-ipv4', {
+        headers: {
+          'X-aws-ec2-metadata-token': token,
+        }
+      }).then(res => {
+        if(res.ok){
+            SERVER_PUBLIC_IP = res.text();
+            console.log('API SERVER_PUBLIC_IP: ', SERVER_PUBLIC_IP);
+        }
+      }).catch(error => {
+        console.error('Get AWS IP CALL ERROR: ', error);
+      })
+
+    }
+  }).catch(error => {
+    console.error('Get META DATA SERVICE TOKEN, AWS IP CALL ERROR: ', error);
+  })
 }
 
 var WORKER_INTERVAL = isNaN(parseInt(conf.workerInterval)) ? 30 * 1000 :
