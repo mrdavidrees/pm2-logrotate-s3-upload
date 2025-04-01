@@ -180,13 +180,20 @@ function delete_old(file) {
             .replace(/__day__/, currentTime.getDate())
             .replace(/__filename__/, rotated_files[i])
             .replace(/__epoch__/, currentTime.getTime())}`;
+
+          var awsRegion = process.env.AWS_REGION;
+          console.log("REGION: ", awsRegion);
+          var bucket = conf.regionMap
+            ? conf.logBucketSetting.bucket.replace(
+                /__region__/,
+                conf.regionMap[awsRegion]
+              )
+            : conf.logBucketSetting.bucket;
           console.log("KEY: ", key);
+          console.log("BUCKET: ", bucket);
+
           awsS3
-            .putFile(
-              conf.logBucketSetting.bucket,
-              key,
-              path.resolve(dirName, rotated_files[i])
-            )
+            .putFile(bucket, key, path.resolve(dirName, rotated_files[i]))
             .then(() => {
               console.log(`${rotated_files[i]} has been uploaded to ${key}`);
               return fs.unlink(
