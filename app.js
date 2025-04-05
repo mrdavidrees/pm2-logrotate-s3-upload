@@ -100,6 +100,64 @@ if (
     });
 }
 
+if (
+  !conf ||
+  !conf.aws ||
+  !conf.aws.credentials ||
+  !conf.aws.credentials.region
+) {
+  fetch("http://169.254.169.254/latest/api/token", {
+    method: "PUT",
+    headers: {
+      "X-aws-ec2-metadata-token-ttl-seconds": "3600",
+    },
+  })
+    .then(async (tokenResponse) => {
+      if (tokenResponse.ok) {
+        const token = await tokenResponse.text();
+        console.log("GET META DATA SERVICE TOKEN: ", token);
+
+        fetch(
+          "http://169.254.169.254/latest/meta-data/placement/availability-zone",
+          {
+            headers: {
+              "X-aws-ec2-metadata-token": token,
+            },
+          }
+        )
+          .then(async (res) => {
+            if (res.ok) {
+              const az = await res.text(); // e.g. ap-southeast-2b
+              const region = az.slice(0, -1); // remove last char
+              process.env.AWS_REGION = region;
+              console.log("API AWS REGION (from metadata):", region);
+            } else {
+              console.log(
+                "API AWS REGION: Request failed",
+                res.status,
+                res.statusText
+              );
+            }
+          })
+          .catch((error) => {
+            console.error("GET AWS REGION CALL ERROR: ", error);
+          });
+      } else {
+        console.log(
+          "GET META DATA SERVICE TOKEN: Request failed",
+          tokenResponse.status,
+          tokenResponse.statusText
+        );
+      }
+    })
+    .catch((error) => {
+      console.error(
+        "GET META DATA SERVICE TOKEN, AWS REGION CALL ERROR: ",
+        error
+      );
+    });
+}
+
 var WORKER_INTERVAL = isNaN(parseInt(conf.workerInterval))
   ? 30 * 1000
   : parseInt(conf.workerInterval) * 1000; // default: 30 secs
@@ -207,19 +265,6 @@ function delete_old(file) {
             .catch((error) => {
               console.error(JSON.stringify(error));
             });
-          // var upload = s3Stream.upload({
-          //     "Bucket": conf.logBucketSetting.bucket,
-          //     "Key": (conf.logBucketSetting.s3Path + '/' + currentTime.getFullYear() + '/' + (currentTime.getMonth() + 1) + '/' + currentTime.getDate() + '/' + conf.serverIp + '/' + compressedFileName)
-          //     "Key": `${conf.logBucketSetting.s3Path}/${(conf.logBucketSetting.s3FilePathFormat || '__filename__')
-          //     .replace(/__ip__/, SERVER_PUBLIC_IP || '')
-          //     .replace(/__year__/, currentTime.getFullYear())
-          //     .replace(/__month__/, currentTime.getMonth() + 1)
-          //     .replace(/__day__/, currentTime.getDate())
-          //     .replace(/__filename__/, rotated_files)
-          //     .replace(/__epoch__/, currentTime.getTime())
-          // }`
-          // });
-          // readStream.pipe(upload);
         } else {
           console.log(`${rotated_files[i]} WAS NOT UPLOADED ${key}`);
         }
