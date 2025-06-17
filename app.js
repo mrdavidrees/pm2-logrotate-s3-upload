@@ -26,7 +26,7 @@ var conf = pmx.initModule({
 });
 var PM2_ROOT_PATH = "";
 var Probe = pmx.probe();
-var SERVER_PUBLIC_IP;
+var SERVER_IP;
 
 if (process.env.PM2_HOME) PM2_ROOT_PATH = process.env.PM2_HOME;
 else if (process.env.HOME && !process.env.HOMEPATH)
@@ -50,11 +50,11 @@ if (
   process.env.SERVER_PUBLIC_IP &&
   typeof process.env.SERVER_PUBLIC_IP === "string"
 ) {
-  SERVER_PUBLIC_IP = process.env.SERVER_PUBLIC_IP;
-  console.log("ENV SERVER_PUBLIC_IP: ", SERVER_PUBLIC_IP);
+  SERVER_IP = process.env.SERVER_PUBLIC_IP;
+  console.log("ENV SERVER_PUBLIC_IP: ", SERVER_IP);
 } else if (conf && conf.serverIp) {
-  SERVER_PUBLIC_IP = conf.serverIp;
-  console.log("CONF SERVER_PUBLIC_IP: ", SERVER_PUBLIC_IP);
+  SERVER_IP = conf.serverIp;
+  console.log("CONF SERVER_PUBLIC_IP: ", SERVER_IP);
 } else if (conf && conf.getAWSPublicIp) {
   fetch("http://169.254.169.254/latest/api/token", {
     method: "PUT",
@@ -74,11 +74,54 @@ if (
         })
           .then(async (res) => {
             if (res.ok) {
-              SERVER_PUBLIC_IP = await res.text();
-              console.log("API SERVER_PUBLIC_IP: ", SERVER_PUBLIC_IP);
+              SERVER_IP = await res.text();
+              console.log("API SERVER_PUBLIC_IP: ", SERVER_IP);
             } else {
               console.log(
                 "API SERVER_PUBLIC_IP: Request failed",
+                res.status,
+                res.statusText
+              );
+            }
+          })
+          .catch((error) => {
+            console.error("GET AWS IP CALL ERROR: ", error);
+          });
+      } else {
+        console.log(
+          "GET META DATA SERVICE TOKEN: Request failed",
+          res.status,
+          res.statusText
+        );
+      }
+    })
+    .catch((error) => {
+      console.error("GET META DATA SERVICE TOKEN, AWS IP CALL ERROR: ", error);
+    });
+} else if (conf && conf.getAWSPrivateIp) {
+  fetch("http://169.254.169.254/latest/api/token", {
+    method: "PUT",
+    headers: {
+      "X-aws-ec2-metadata-token-ttl-seconds": "3600",
+    },
+  })
+    .then(async (tokenResponse) => {
+      if (tokenResponse.ok) {
+        const token = await tokenResponse.text();
+        console.log("GET META DATA SERVICE TOKEN: ", token);
+
+        fetch("http://169.254.169.254/latest/meta-data/local-ipv4", {
+          headers: {
+            "X-aws-ec2-metadata-token": token,
+          },
+        })
+          .then(async (res) => {
+            if (res.ok) {
+              SERVER_IP = await res.text();
+              console.log("API SERVER_PRIVATE_IP: ", SERVER_IP);
+            } else {
+              console.log(
+                "API SERVER_PRIVATE_IP: Request failed",
                 res.status,
                 res.statusText
               );
@@ -210,7 +253,7 @@ function delete_old(file) {
             conf.aws.credentials.secretAccessKey);
 
         if (
-          SERVER_PUBLIC_IP &&
+          SERVER_IP &&
           conf.logBucketSetting &&
           conf.logBucketSetting.bucket &&
           conf.logBucketSetting.s3Path &&
@@ -232,7 +275,7 @@ function delete_old(file) {
           var key = `${conf.logBucketSetting.s3Path}/${(
             conf.logBucketSetting.s3FilePathFormat || "__filename__"
           )
-            .replace(/__ip__/, SERVER_PUBLIC_IP || "")
+            .replace(/__ip__/, SERVER_IP || "")
             .replace(/__year__/, currentTime.getFullYear())
             .replace(/__month__/, currentTime.getMonth() + 1)
             .replace(/__day__/, currentTime.getDate())
