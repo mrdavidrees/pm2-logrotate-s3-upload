@@ -35,14 +35,13 @@ else if (process.env.HOME || process.env.HOMEPATH)
   PM2_ROOT_PATH = path.resolve(
     process.env.HOMEDRIVE,
     process.env.HOME || process.env.HOMEPATH,
-    ".pm2"
+    ".pm2",
   );
 
 try {
-  var customConfig = require(path.resolve(
-    PM2_ROOT_PATH,
-    "pm2-logrotate-s3-upload-config.js"
-  ));
+  var customConfig = require(
+    path.resolve(PM2_ROOT_PATH, "pm2-logrotate-s3-upload-config.js"),
+  );
   conf = deepExtend(conf, customConfig);
 } catch (error) {}
 
@@ -56,6 +55,7 @@ if (
   SERVER_IP = conf.serverIp;
   console.log("CONF SERVER_PUBLIC_IP: ", SERVER_IP);
 } else if (conf && conf.getAWSPublicIp) {
+  console.log("GET PUBLIC IP.. ");
   fetch("http://169.254.169.254/latest/api/token", {
     method: "PUT",
     headers: {
@@ -65,7 +65,7 @@ if (
     .then(async (tokenResponse) => {
       if (tokenResponse.ok) {
         const token = await tokenResponse.text();
-        console.log("GET META DATA SERVICE TOKEN: ", token);
+        console.log("GET META DATA SERVICE TOKEN 1: ", token);
 
         fetch("http://169.254.169.254/latest/meta-data/public-ipv4", {
           headers: {
@@ -80,7 +80,7 @@ if (
               console.log(
                 "API SERVER_PUBLIC_IP: Request failed",
                 res.status,
-                res.statusText
+                res.statusText,
               );
             }
           })
@@ -91,7 +91,7 @@ if (
         console.log(
           "GET META DATA SERVICE TOKEN: Request failed",
           res.status,
-          res.statusText
+          res.statusText,
         );
       }
     })
@@ -99,6 +99,7 @@ if (
       console.error("GET META DATA SERVICE TOKEN, AWS IP CALL ERROR: ", error);
     });
 } else if (conf && conf.getAWSPrivateIp) {
+  console.log("GET PRIVATE IP.. ");
   fetch("http://169.254.169.254/latest/api/token", {
     method: "PUT",
     headers: {
@@ -108,7 +109,7 @@ if (
     .then(async (tokenResponse) => {
       if (tokenResponse.ok) {
         const token = await tokenResponse.text();
-        console.log("GET META DATA SERVICE TOKEN: ", token);
+        console.log("GET META DATA SERVICE TOKEN 2: ", token);
 
         fetch("http://169.254.169.254/latest/meta-data/local-ipv4", {
           headers: {
@@ -123,7 +124,7 @@ if (
               console.log(
                 "API SERVER_PRIVATE_IP: Request failed",
                 res.status,
-                res.statusText
+                res.statusText,
               );
             }
           })
@@ -134,7 +135,7 @@ if (
         console.log(
           "GET META DATA SERVICE TOKEN: Request failed",
           res.status,
-          res.statusText
+          res.statusText,
         );
       }
     })
@@ -149,6 +150,7 @@ if (
   !conf.aws.credentials ||
   !conf.aws.credentials.region
 ) {
+  console.log("Load AWS Region... ");
   fetch("http://169.254.169.254/latest/api/token", {
     method: "PUT",
     headers: {
@@ -158,7 +160,7 @@ if (
     .then(async (tokenResponse) => {
       if (tokenResponse.ok) {
         const token = await tokenResponse.text();
-        console.log("GET META DATA SERVICE TOKEN: ", token);
+        console.log("GET META DATA SERVICE TOKEN 3: ", token);
 
         fetch(
           "http://169.254.169.254/latest/meta-data/placement/availability-zone",
@@ -166,7 +168,7 @@ if (
             headers: {
               "X-aws-ec2-metadata-token": token,
             },
-          }
+          },
         )
           .then(async (res) => {
             if (res.ok) {
@@ -178,7 +180,7 @@ if (
               console.log(
                 "API AWS REGION: Request failed",
                 res.status,
-                res.statusText
+                res.statusText,
               );
             }
           })
@@ -189,14 +191,14 @@ if (
         console.log(
           "GET META DATA SERVICE TOKEN: Request failed",
           tokenResponse.status,
-          tokenResponse.statusText
+          tokenResponse.statusText,
         );
       }
     })
     .catch((error) => {
       console.error(
         "GET META DATA SERVICE TOKEN, AWS REGION CALL ERROR: ",
-        error
+        error,
       );
     });
 }
@@ -287,7 +289,7 @@ function delete_old(file) {
           var bucket = conf.regionMap
             ? conf.logBucketSetting.bucket.replace(
                 /__region__/,
-                conf.regionMap[awsRegion]
+                conf.regionMap[awsRegion],
               )
             : conf.logBucketSetting.bucket;
           console.log("KEY: ", key);
@@ -302,14 +304,18 @@ function delete_old(file) {
                 function (err) {
                   if (err) return console.error(err);
                   console.log('"' + rotated_files[i] + '" has been deleted');
-                }
+                },
               );
             })
             .catch((error) => {
               console.error(JSON.stringify(error));
             });
         } else {
-          console.log(`${rotated_files[i]} WAS NOT UPLOADED ${key}`);
+          console.log(
+            `${rotated_files[i]} WAS NOT UPLOADED ${key}`,
+            hasPermissions,
+            SERVER_IP,
+          );
         }
       })(i);
     }
